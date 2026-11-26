@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChiPo™ Admin Panel | శ్రీ వర్షిత ఎంటర్ప్రైజెస్</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Noto Sans Telugu -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Telugu:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans Telugu', 'sans-serif'],
+          },
+          colors: {
+            chipoGreen: '#15803d',
+            chipoGreenBright: '#16a34a',
+            chipoOrange: '#f97316',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans Telugu', sans-serif;
+      background-color: #f1f5f9;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-slide-up {
+      animation: slideUp 0.25s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex justify-center bg-slate-200/70">
+
+  <!-- Main Responsive Container -->
+  <div class="w-full max-w-[480px] min-h-screen bg-slate-50 shadow-xl flex flex-col relative overflow-x-hidden">
+
+    <!-- Toast Notification Banner (No alert() used) -->
+    <div id="toast-banner" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-2xl flex items-center gap-2 transition-all">
+      <i class="fa-solid fa-circle-check text-green-400"></i>
+      <span id="toast-text">Updated successfully</span>
+    </div>
+
+    <!-- =========================================================
+         1. ADMIN PIN LOCK SCREEN (Default PIN: 1234)
+         ========================================================= -->
+    <div id="pin-screen" class="flex-1 flex flex-col justify-between bg-gradient-to-b from-green-900 via-[#15803d] to-slate-900 text-white p-6">
+      <div class="pt-6 text-center">
+        <div class="inline-flex items-center gap-2 bg-white/15 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/20">
+          <div class="w-9 h-9 rounded-xl bg-[#f97316] flex items-center justify-center text-white text-lg shadow">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <div class="text-left">
+            <h1 class="text-xl font-extrabold tracking-tight leading-none">
+              <span class="text-green-300">Chi</span><span class="text-[#f97316]">Po</span><sup class="text-[9px] text-white/80">TM</sup> Admin
+            </h1>
+            <p class="text-[10px] text-green-100 mt-0.5">శ్రీ వర్షిత ఎంటర్ప్రైజెస్ • Owner Portal</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white text-slate-900 rounded-3xl p-6 shadow-2xl my-auto">
+        <div class="text-center mb-5">
+          <div class="w-12 h-12 rounded-2xl bg-green-100 text-[#15803d] flex items-center justify-center text-xl mx-auto mb-2">
+            <i class="fa-solid fa-lock"></i>
+          </div>
+          <h2 class="text-lg font-extrabold">Admin Security Lock</h2>
+          <p class="text-xs text-slate-500 mt-0.5">స్టాక్ & ఆర్డర్లు నిర్వహించడానికి 4-అంకెల PIN నమోదు చేయండి</p>
+        </div>
+
+        <!-- PIN Dots Display -->
+        <div class="flex justify-center gap-3 mb-5" id="pin-dots">
+          <span class="pin-dot w-4 h-4 rounded-full border-2 border-slate-300 bg-slate-100"></span>
+          <span class="pin-dot w-4 h-4 rounded-full border-2 border-slate-300 bg-slate-100"></span>
+          <span class="pin-dot w-4 h-4 rounded-full border-2 border-slate-300 bg-slate-100"></span>
+          <span class="pin-dot w-4 h-4 rounded-full border-2 border-slate-300 bg-slate-100"></span>
+        </div>
+
+        <p id="pin-error" class="hidden text-center text-xs font-bold text-red-600 mb-3">తప్పు PIN! మళ్ళీ ప్రయత్నించండి (Default: 1234)</p>
+
+        <!-- Tactile Numeric Keypad -->
+        <div class="grid grid-cols-3 gap-2.5 max-w-[270px] mx-auto">
+          <button onclick="pressPin('1')" class="h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 font-extrabold text-lg text-slate-800">1</button>
+          <button onclick="pressPin('2')" class="h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 font-extrabold text-lg text-slate-800">2</button>
+          <button onclick="pressPin('3')" class="h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 font-extrabold text-lg text-slate-800">3</button>
+          <button onclick="pressPin('4')" class="h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 font-extrabold text-lg text-slate-800">4</button>
+          <button onclick="pressPin('5')" class="h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 font-extrabold text-lg text-slate-800">5</button>
+          <button onclick="pressPin('6')" class="h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 font-extrabold text-lg text-slate-800">6</button>
+          <button onclick="pressPin('7')" class="h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 font-extrabold text-lg text-slate-800">7</button>
+          <button onclick="pressPin('8')" class="h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 font-extrabold text-lg text-slate-800">8</button>
+          <button onclick="pressPin('9')" class="h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 font-extrabold text-lg text-slate-800">9</button>
+          <button onclick="clearPin()" class="h-12 rounded-2xl bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs">CLEAR</button>
+          <button onclick="pressPin('0')" class="h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 font-extrabold text-lg text-slate-800">0</button>
+          <button onclick="verifyPin()" class="h-12 rounded-2xl bg-[#15803d] hover:bg-green-800 text-white font-bold text-sm shadow">
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+
+        <p class="text-center text-[11px] text-slate-400 mt-4">Default Owner PIN: <strong class="text-slate-600">1234</strong></p>
+      </div>
+
+      <div class="text-center text-[11px] text-green-100/80 pb-2">
+        Vemulapalli • Nandigama • Chandarlapadu • Kanchikacherla
+      </div>
+    </div>
+
+    <!-- =========================================================
+         2. MAIN ADMIN DASHBOARD
+         ========================================================= -->
+    <div id="admin-dashboard" class="hidden flex-1 flex flex-col">
+
+      <!-- Top Header -->
+      <header class="bg-white px-4 py-3 border-b border-slate-200 sticky top-0 z-30">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-9 h-9 rounded-xl bg-green-100 text-[#15803d] flex items-center justify-center font-extrabold text-lg">
+              <i class="fa-solid fa-store"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <h1 class="text-base font-extrabold text-slate-900">
+                  <span class="text-[#15803d]">Chi</span><span class="text-[#f97316]">Po</span> Admin
+                </h1>
+                <span id="header-store-badge" class="text-[10px] font-extrabold bg-green-100 text-[#15803d] px-2 py-0.5 rounded-full">OPEN</span>
+              </div>
+              <p class="text-[10px] text-slate-500 font-medium">శ్రీ వర్షిత ఎంటర్ప్రైజెస్ • Sekhar</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="syncFromStorage(true)" title="Sync Orders & Stock" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-sm">
+              <i class="fa-solid fa-rotate"></i>
+            </button>
+            <button onclick="lockAdmin()" title="Lock Admin" class="w-9 h-9 rounded-xl bg-orange-50 hover:bg-orange-100 text-[#f97316] flex items-center justify-center text-sm">
+              <i class="fa-solid fa-lock"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 TOP SUMMARY DASHBOARD CARDS -->
+        <div class="grid grid-cols-4 gap-2 mt-3">
+          <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-2 text-center">
+            <span class="text-[9px] font-bold text-slate-500 block uppercase">Today Orders</span>
+            <span id="stat-total-orders" class="text-base font-extrabold text-slate-900">0</span>
+          </div>
+          <div class="bg-orange-50 border border-orange-200/80 rounded-xl p-2 text-center">
+            <span class="text-[9px] font-bold text-[#f97316] block uppercase">Pending</span>
+            <span id="stat-pending-orders" class="text-base font-extrabold text-[#f97316]">0</span>
+          </div>
+          <div class="bg-blue-50 border border-blue-200/80 rounded-xl p-2 text-center">
+            <span class="text-[9px] font-bold text-blue-700 block uppercase">Active Rides</span>
+            <span id="stat-active-rides" class="text-base font-extrabold text-blue-800">0</span>
+          </div>
+          <div class="bg-green-50 border border-green-200/80 rounded-xl p-2 text-center">
+            <span class="text-[9px] font-bold text-[#15803d] block uppercase">Revenue</span>
+            <span id="stat-revenue" class="text-sm font-extrabold text-[#15803d]">₹0</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- MAIN SCROLLABLE CONTENT -->
+      <main class="flex-1 overflow-y-auto no-scrollbar pb-24 px-3.5 pt-3">
+
+        <!-- =====================================================
+             TAB 1: LIVE ORDERS & RIDES MANAGEMENT
+             ===================================================== -->
+        <div id="tab-orders" class="space-y-3 animate-slide-up">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-extrabold text-slate-900">ఆర్డర్లు & రైడ్‌లు • Live Orders</h2>
+            <button onclick="addSimulatedCustomerOrder()" class="text-[11px] font-bold bg-slate-800 text-white px-2.5 py-1 rounded-lg shadow-2xs">
+              + Test Order
+            </button>
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+            <button onclick="setOrderFilter('all')" id="filter-all" class="order-filter-btn shrink-0 px-3 py-1.5 rounded-full text-xs font-bold bg-[#15803d] text-white">
+              All (అన్నీ)
+            </button>
+            <button onclick="setOrderFilter('Grocery')" id="filter-Grocery" class="order-filter-btn shrink-0 px-3 py-1.5 rounded-full text-xs font-bold bg-white text-slate-700 border border-slate-200">
+              🧺 Grocery (కిరాణా)
+            </button>
+            <button onclick="setOrderFilter('Ride')" id="filter-Ride" class="order-filter-btn shrink-0 px-3 py-1.5 rounded-full text-xs font-bold bg-white text-slate-700 border border-slate-200">
+              🏍️🛺 Rides (రైడ్‌లు)
+            </button>
+            <button onclick="setOrderFilter('Parcel')" id="filter-Parcel" class="order-filter-btn shrink-0 px-3 py-1.5 rounded-full text-xs font-bold bg-white text-slate-700 border border-slate-200">
+              📦 Parcel (పార్సెల్)
+            </button>
+          </div>
+
+          <!-- Orders Container -->
+          <div id="admin-orders-list" class="space-y-3">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- =====================================================
+             TAB 2: LIVE STOCK & PRICE MANAGER
+             ===================================================== -->
+        <div id="tab-stock" class="hidden space-y-3 animate-slide-up">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-sm font-extrabold text-slate-900">స్టాక్ & ధరల నిర్వహణ</h2>
+              <p class="text-[10px] text-slate-500">Toggle stock ON/OFF or edit selling price directly</p>
+            </div>
+            <button onclick="openAddProductModal()" class="bg-[#f97316] hover:bg-orange-600 text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow flex items-center gap-1.5">
+              <i class="fa-solid fa-plus"></i>
+              <span>Add Item</span>
+            </button>
+          </div>
+
+          <!-- Search Bar -->
+          <div class="bg-white border border-slate-200 rounded-xl px-3 py-2 flex items-center gap-2 shadow-2xs">
+            <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs"></i>
+            <input id="stock-search-input" oninput="renderStockList()" type="text" placeholder="వస్తువు పేరు వెతకండి (బియ్యం, పాలు, నూనె, Tomato)..."
+              class="w-full text-xs text-slate-800 focus:outline-none" />
+          </div>
+
+          <!-- Category Filter Pills -->
+          <div id="stock-category-pills" class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+            <!-- Populated by JS -->
+          </div>
+
+          <!-- Stock Items List -->
+          <div id="admin-stock-list" class="space-y-2.5">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- =====================================================
+             TAB 3: ROUTE & DELIVERY SETTINGS
+             ===================================================== -->
+        <div id="tab-settings" class="hidden space-y-4 animate-slide-up">
+          <h2 class="text-sm font-extrabold text-slate-900">రూట్ & ఛార్జీల సెట్టింగ్స్ • Store Control</h2>
+
+          <!-- Store Open / Close Master Toggle -->
+          <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs flex items-center justify-between">
+            <div>
+              <h3 id="store-status-title" class="text-sm font-extrabold text-[#15803d]">Store Open • షాప్ తెరిచి ఉంది</h3>
+              <p class="text-[11px] text-slate-500 mt-0.5">Customers can place orders & book rides now</p>
+            </div>
+            <button onclick="toggleStoreOpen()" id="store-master-toggle" class="w-16 h-9 rounded-full bg-[#16a34a] p-1 transition-colors flex items-center justify-end">
+              <span class="w-7 h-7 rounded-full bg-white shadow-md block"></span>
+            </button>
+          </div>
+
+          <!-- Ride & Delivery Rates Form -->
+          <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs space-y-3">
+            <h3 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Ride & Delivery Fare Rates (₹)</h3>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-[11px] font-bold text-slate-700 block mb-1">🏍️ Bike Rate (₹ / km)</label>
+                <input id="setting-bike-rate" type="number" step="0.5" value="4.5" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-extrabold text-slate-900" />
+              </div>
+              <div>
+                <label class="text-[11px] font-bold text-slate-700 block mb-1">🛺 Auto Rate (₹ / km)</label>
+                <input id="setting-auto-rate" type="number" step="0.5" value="8.5" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-extrabold text-slate-900" />
+              </div>
+            </div>
+
+            <div>
+              <label class="text-[11px] font-bold text-slate-700 block mb-1">🛒 Minimum Free Delivery Order (₹)</label>
+              <input id="setting-free-delivery" type="number" value="199" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-extrabold text-slate-900" />
+            </div>
+
+            <button onclick="saveDeliverySettings()" class="w-full bg-[#15803d] hover:bg-green-800 text-white font-extrabold text-xs py-3 rounded-xl shadow">
+              Save Rates & Settings • సేవ్ చేయండి
+            </button>
+          </div>
+
+          <!-- Active Service Routes Overview -->
+          <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs space-y-2">
+            <h3 class="text-xs font-extrabold text-slate-800">Active NTR District Corridors (18 Stops)</h3>
+            <div class="p-2.5 rounded-xl bg-green-50 text-[11px] text-green-950 font-medium">
+              <strong>Route 1:</strong> వేములపల్లి ➔ ఎస్.అమరవరం ➔ పెండ్యాల ➔ కీసర ➔ ఐతవరం ➔ అంబారుపేట ➔ నందిగామ
+            </div>
+            <div class="p-2.5 rounded-xl bg-orange-50 text-[11px] text-orange-950 font-medium">
+              <strong>Route 2:</strong> నందిగామ ➔ చందాపురం ➔ ముప్పాళ్ళ (చందర్లపాడు / తోటరావులపాడు / చింతలపాడు / తుర్లపాడు) ➔ కంచల ➔ BJT & MIC కాలేజీ ➔ పెరకలపాడు ➔ కంచికచర్ల
+            </div>
+          </div>
+
+          <!-- Change Admin PIN -->
+          <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs space-y-2.5">
+            <h3 class="text-xs font-extrabold text-slate-800">Change Owner Security PIN</h3>
+            <div class="flex gap-2">
+              <input id="new-pin-input" type="password" maxlength="4" inputmode="numeric" placeholder="New 4-digit PIN" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900" />
+              <button onclick="updateAdminPin()" class="bg-slate-900 text-white font-bold text-xs px-4 py-2 rounded-xl">Update PIN</button>
+            </div>
+          </div>
+        </div>
+
+      </main>
+
+      <!-- BOTTOM NAVIGATION BAR -->
+      <nav class="bg-white border-t border-slate-200 px-2 py-2 flex items-center justify-around sticky bottom-0 z-30">
+        <button onclick="switchAdminTab('orders')" id="nav-tab-orders" class="admin-nav-btn flex flex-col items-center gap-0.5 text-[#15803d] font-extrabold px-4 py-1">
+          <i class="fa-solid fa-receipt text-lg"></i>
+          <span class="text-[10px]">Orders & Rides</span>
+        </button>
+        <button onclick="switchAdminTab('stock')" id="nav-tab-stock" class="admin-nav-btn flex flex-col items-center gap-0.5 text-slate-500 font-medium px-4 py-1">
+          <i class="fa-solid fa-boxes-stacked text-lg"></i>
+          <span class="text-[10px]">Stock & Prices</span>
+        </button>
+        <button onclick="switchAdminTab('settings')" id="nav-tab-settings" class="admin-nav-btn flex flex-col items-center gap-0.5 text-slate-500 font-medium px-4 py-1">
+          <i class="fa-solid fa-sliders text-lg"></i>
+          <span class="text-[10px]">Settings</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- =========================================================
+         3. ADD NEW ITEM MODAL (+ కొత్త వస్తువు చేర్చండి)
+         ========================================================= -->
+    <div id="add-product-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white w-full max-w-[460px] rounded-t-3xl sm:rounded-3xl p-5 space-y-3.5 animate-slide-up">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900">+ కొత్త వస్తువు చేర్చండి</h3>
+            <p class="text-[11px] text-slate-500">Add New Item to ChiPo Store Catalog</p>
+          </div>
+          <button onclick="closeAddProductModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="space-y-2.5">
+          <div>
+            <label class="text-[11px] font-bold text-slate-700 block mb-1">Telugu Name (తెలుగు పేరు) *</label>
+            <input id="new-prod-te" type="text" placeholder="ఉదా: ఆశీర్వాద్ గోధుమ పిండి" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold" />
+          </div>
+          <div>
+            <label class="text-[11px] font-bold text-slate-700 block mb-1">English Name *</label>
+            <input id="new-prod-en" type="text" placeholder="e.g., Aashirvaad Atta" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold" />
+          </div>
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="text-[11px] font-bold text-slate-700 block mb-1">Category</label>
+              <select id="new-prod-cat" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-semibold">
+                <option value="Groceries & Staples">Groceries & Staples</option>
+                <option value="Fresh Vegetables & Fruits">Fresh Vegetables & Fruits</option>
+                <option value="Dairy & Bakery">Dairy & Bakery</option>
+                <option value="Snacks & Beverages">Snacks & Beverages</option>
+                <option value="Personal Care">Personal Care</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[11px] font-bold text-slate-700 block mb-1">Weight / Unit</label>
+              <input id="new-prod-weight" type="text" placeholder="e.g., 1 kg / 500 ml" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="text-[11px] font-bold text-slate-700 block mb-1">MRP (₹)</label>
+              <input id="new-prod-mrp" type="number" placeholder="65" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" />
+            </div>
+            <div>
+              <label class="text-[11px] font-bold text-slate-700 block mb-1">Selling Price (₹) *</label>
+              <input id="new-prod-price" type="number" placeholder="58" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-[#15803d]" />
+            </div>
+          </div>
+        </div>
+
+        <button onclick="saveNewProduct()" class="w-full bg-[#15803d] hover:bg-green-800 text-white font-extrabold text-sm py-3 rounded-2xl shadow-lg">
+          Add Item to Store • జాబితాలో చేర్చండి
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- =========================================================
+       ADMIN JAVASCRIPT LOGIC & LOCALSTORAGE SYNC
+       ========================================================= -->
+  <script>
+    // 1. DEFAULT SAMPLE DATA (NTR District Villages)
+    const defaultOrders = [
+      {
+        id: 'CHP-2041',
+        category: 'Grocery',
+        customerName: 'రమేష్ బాబు (Ramesh Babu)',
+        phone: '9848011223',
+        village: 'వేములపల్లి (Vemulapalli) - Near Ramalayam',
+        details: 'సోనా మసూరి బియ్యం (5 kg) x1, ఫ్రీడమ్ ఆయిల్ (1 L) x2, కందిపప్పు (1 kg) x1',
+        payment: 'COD',
+        amount: 689,
+        status: 'New',
+        time: '2 mins ago'
+      },
+      {
+        id: 'RID-8812',
+        category: 'Ride',
+        customerName: 'సాయి కృష్ణ (Sai Krishna - MIC Student)',
+        phone: '9989123456',
+        village: 'నందిగామ (Nandigama) ➔ MIC కాలేజీ (Kanchikacherla)',
+        details: '🏍️ ChiPo Bike Ride • 20.5 km • 1 Passenger',
+        payment: 'UPI',
+        amount: 112,
+        status: 'Accepted',
+        time: '6 mins ago'
+      },
+      {
+        id: 'CHP-2039',
+        category: 'Grocery',
+        customerName: 'లక్ష్మి దేవి (Lakshmi Devi)',
+        phone: '9440198765',
+        village: 'పెండ్యాల కాలనీ (Pendyala Colony)',
+        details: 'విజయ పాలు (500ml) x2, తాజా టమోటా (1kg) x1, ఉల్లిపాయలు (2kg) x1',
+        payment: 'Razorpay',
+        amount: 160,
+        status: 'Out for Delivery',
+        time: '14 mins ago'
+      },
+      {
+        id: 'RID-8805',
+        category: 'Ride',
+        customerName: 'వెంకటేశ్వర రావు (Venkateswara Rao)',
+        phone: '9866543210',
+        village: 'ముప్పాళ్ళ జంక్షన్ (Muppalla) ➔ చందర్లపాడు (Chandarlapadu)',
+        details: '🛺 ChiPo Auto Booking • 4.0 km • Family & Luggage',
+        payment: 'COD',
+        amount: 70,
+        status: 'New',
+        time: '18 mins ago'
+      },
+      {
+        id: 'PCL-5510',
+        category: 'Parcel',
+        customerName: 'సురేష్ కుమార్ (Suresh Kumar)',
+        phone: '9177223344',
+        village: 'వేములపల్లి ➔ కంచికచర్ల (Kanchikacharla)',
+        details: '📦 Lunch Box & College Books (Urgent Parcel)',
+        payment: 'UPI',
+        amount: 95,
+        status: 'Delivered',
+        time: '45 mins ago'
+      }
+    ];
+
+    const defaultProducts = [
+      { id: 101, te: 'సోనా మసూరి బియ్యం', en: 'Sona Masoori Rice', category: 'Groceries & Staples', weight: '5 kg', mrp: 340, price: 285, inStock: true, emoji: '🌾' },
+      { id: 102, te: 'ఫ్రీడమ్ సన్‌ఫ్లవర్ ఆయిల్', en: 'Freedom Sunflower Oil', category: 'Groceries & Staples', weight: '1 L', mrp: 155, price: 128, inStock: true, emoji: '🫗' },
+      { id: 103, te: 'కందిపప్పు ప్రీమియం', en: 'Toor Dal Premium', category: 'Groceries & Staples', weight: '1 kg', mrp: 175, price: 148, inStock: true, emoji: '🫘' },
+      { id: 104, te: 'తాజా టమోటా', en: 'Fresh Farm Tomato', category: 'Fresh Vegetables & Fruits', weight: '1 kg', mrp: 40, price: 28, inStock: true, emoji: '🍅' },
+      { id: 105, te: 'ఉల్లిపాయలు', en: 'Red Onions', category: 'Fresh Vegetables & Fruits', weight: '1 kg', mrp: 45, price: 34, inStock: true, emoji: '🧅' },
+      { id: 106, te: 'విజయ ఫుల్ క్రీమ్ పాలు', en: 'Vijaya Full Cream Milk', category: 'Dairy & Bakery', weight: '500 ml', mrp: 34, price: 32, inStock: true, emoji: '🥛' },
+      { id: 107, te: 'గడ్డ పెరుగు ప్యాకెట్', en: 'Fresh Curd Pouch', category: 'Dairy & Bakery', weight: '500 g', mrp: 42, price: 38, inStock: false, emoji: '🥣' },
+      { id: 108, te: 'గుడ్ డే బిస్కెట్లు', en: 'Britannia Good Day', category: 'Snacks & Beverages', weight: '200 g', mrp: 40, price: 35, inStock: true, emoji: '🍪' },
+      { id: 109, te: 'థమ్స్ అప్ కూల్ డ్రింక్', en: 'Thums Up Bottle', category: 'Snacks & Beverages', weight: '750 ml', mrp: 45, price: 40, inStock: true, emoji: '🥤' },
+      { id: 110, te: 'సంతూర్ సబ్బు (4 ప్యాక్)', en: 'Santoor Sandal Soap Pack', category: 'Personal Care', weight: '4 x 100g', mrp: 148, price: 132, inStock: true, emoji: '🧼' }
+    ];
+
+    const stockCategories = [
+      'All',
+      'Groceries & Staples',
+      'Fresh Vegetables & Fruits',
+      'Dairy & Bakery',
+      'Snacks & Beverages',
+      'Personal Care'
+    ];
+
+    // 2. STATE VARIABLES
+    let enteredPin = '';
+    let orders = [];
+    let products = [];
+    let currentOrderFilter = 'all';
+    let currentStockCategory = 'All';
+    let storeSettings = {
+      isOpen: true,
+      bikeRate: 4.5,
+      autoRate: 8.5,
+      freeDeliveryMin: 199
+    };
+
+    // 3. INITIALIZE ON LOAD
+    window.onload = function () {
+      syncFromStorage(false);
+      renderStockCategoryPills();
+      renderAll();
+    };
+
+    // Toast Helper
+    function showToast(msg) {
+      const toast = document.getElementById('toast-banner');
+      document.getElementById('toast-text').textContent = msg;
+      toast.classList.remove('hidden');
+      clearTimeout(window._adminToastTimer);
+      window._adminToastTimer = setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 2600);
+    }
+
+    // 4. PIN LOCK LOGIC
+    function getSavedPin() {
+      return localStorage.getItem('chipo_admin_pin') || '1234';
+    }
+
+    function updatePinDots() {
+      const dots = document.querySelectorAll('.pin-dot');
+      dots.forEach((dot, idx) => {
+        if (idx < enteredPin.length) {
+          dot.className = 'pin-dot w-4 h-4 rounded-full bg-[#15803d] border-2 border-[#15803d] scale-110 transition-all';
+        } else {
+          dot.className = 'pin-dot w-4 h-4 rounded-full border-2 border-slate-300 bg-slate-100';
+        }
+      });
+    }
+
+    function pressPin(digit) {
+      if (enteredPin.length >= 4) return;
+      enteredPin += digit;
+      document.getElementById('pin-error').classList.add('hidden');
+      updatePinDots();
+      if (enteredPin.length === 4) {
+        setTimeout(verifyPin, 150);
+      }
+    }
+
+    function clearPin() {
+      enteredPin = '';
+      document.getElementById('pin-error').classList.add('hidden');
+      updatePinDots();
+    }
+
+    function verifyPin() {
+      if (enteredPin === getSavedPin()) {
+        document.getElementById('pin-screen').classList.add('hidden');
+        document.getElementById('admin-dashboard').classList.remove('hidden');
+        enteredPin = '';
+        updatePinDots();
+        showToast('స్వాగతం Sekhar! ChiPo Admin Dashboard');
+      } else {
+        document.getElementById('pin-error').classList.remove('hidden');
+        enteredPin = '';
+        updatePinDots();
+      }
+    }
+
+    function lockAdmin() {
+      document.getElementById('admin-dashboard').classList.add('hidden');
+      document.getElementById('pin-screen').classList.remove('hidden');
+      clearPin();
+    }
+
+    function updateAdminPin() {
+      const val = document.getElementById('new-pin-input').value.trim();
+      if (!/^\d{4}$/.test(val)) {
+        showToast('దయచేసి 4 అంకెల కొత్త PIN ఇవ్వండి');
+        return;
+      }
+      localStorage.setItem('chipo_admin_pin', val);
+      document.getElementById('new-pin-input').value = '';
+      showToast('Admin PIN విజయవంతంగా మార్చబడింది!');
+    }
+
+    // 5. LOCALSTORAGE SYNC (Shared keys: chipo_orders, chipo_products, chipo_settings)
+    function syncFromStorage(notify) {
+      try {
+        const storedOrders = JSON.parse(localStorage.getItem('chipo_orders'));
+        orders = (Array.isArray(storedOrders) && storedOrders.length > 0) ? storedOrders : [...defaultOrders];
+
+        const storedProducts = JSON.parse(localStorage.getItem('chipo_products'));
+        products = (Array.isArray(storedProducts) && storedProducts.length > 0) ? storedProducts : [...defaultProducts];
+
+        const storedSettings = JSON.parse(localStorage.getItem('chipo_settings'));
+        if (storedSettings) {
+          storeSettings = { ...storeSettings, ...storedSettings };
+        }
+      } catch (e) {
+        orders = [...defaultOrders];
+        products = [...defaultProducts];
+      }
+      saveToStorage();
+      applySettingsToUI();
+      renderAll();
+      if (notify) showToast('Synced with local storage!');
+    }
+
+    function saveToStorage() {
+      localStorage.setItem('chipo_orders', JSON.stringify(orders));
+      localStorage.setItem('chipo_products', JSON.stringify(products));
+      localStorage.setItem('chipo_settings', JSON.stringify(storeSettings));
+    }
+
+    function renderAll() {
+      updateDashboardStats();
+      renderOrdersList();
+      renderStockList();
+    }
+
+    // 6. SUMMARY STATS
+    function updateDashboardStats() {
+      const totalOrders = orders.length;
+      const pendingOrders = orders.filter(o => o.status === 'New' || o.status === 'Accepted').length;
+      const activeRides = orders.filter(o => o.category === 'Ride' && o.status !== 'Delivered' && o.status !== 'Cancelled').length;
+      const revenue = orders
+        .filter(o => o.status !== 'Cancelled')
+        .reduce((sum, o) => sum + Number(o.amount || 0), 0);
+
+      document.getElementById('stat-total-orders').textContent = totalOrders;
+      document.getElementById('stat-pending-orders').textContent = pendingOrders;
+      document.getElementById('stat-active-rides').textContent = activeRides;
+      document.getElementById('stat-revenue').textContent = `₹${revenue}`;
+    }
+
+    // 7. TAB NAVIGATION
+    function switchAdminTab(tab) {
+      ['tab-orders', 'tab-stock', 'tab-settings'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+      document.querySelectorAll('.admin-nav-btn').forEach(btn => {
+        btn.classList.remove('text-[#15803d]', 'font-extrabold');
+        btn.classList.add('text-slate-500', 'font-medium');
+      });
+
+      document.getElementById('tab-' + tab).classList.remove('hidden');
+      const activeBtn = document.getElementById('nav-tab-' + tab);
+      activeBtn.classList.remove('text-slate-500', 'font-medium');
+      activeBtn.classList.add('text-[#15803d]', 'font-extrabold');
+    }
+
+    // 8. TAB 1: ORDERS & RIDES MANAGEMENT
+    function setOrderFilter(filter) {
+      currentOrderFilter = filter;
+      document.querySelectorAll('.order-filter-btn').forEach(btn => {
+        btn.className = 'order-filter-btn shrink-0 px-3 py-1.5 rounded-full text-xs font-bold bg-white text-slate-700 border border-slate-200';
+      });
+      document.getElementById('filter-' + filter).className = 'order-filter-btn shrink-0 px-3 py-1.5 rounded-full text-xs font-bold bg-[#15803d] text-white shadow-2xs';
+      renderOrdersList();
+    }
+
+    function getStatusBadge(status) {
+      const map = {
+        'New': { label: 'New • కొత్తది', cls: 'bg-orange-100 text-[#f97316] border-orange-200' },
+        'Accepted': { label: 'Accepted • అంగీకరించబడింది', cls: 'bg-blue-100 text-blue-800 border-blue-200' },
+        'Out for Delivery': { label: 'Out for Delivery • బయలుదేరింది', cls: 'bg-purple-100 text-purple-800 border-purple-200' },
+        'Delivered': { label: 'Delivered • పూర్తయింది', cls: 'bg-green-100 text-[#15803d] border-green-200' },
+        'Cancelled': { label: 'Cancelled • రద్దు', cls: 'bg-red-100 text-red-700 border-red-200' }
+      };
+      return map[status] || map['New'];
+    }
+
+    function renderOrdersList() {
+      const container = document.getElementById('admin-orders-list');
+      const filtered = currentOrderFilter === 'all'
+        ? orders
+        : orders.filter(o => o.category === currentOrderFilter);
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="bg-white rounded-2xl p-8 text-center text-xs text-slate-400 border border-slate-200">ఈ విభాగంలో ప్రస్తుతం ఆర్డర్లు లేవు.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(o => {
+        const badge = getStatusBadge(o.status);
+        const catIcon = o.category === 'Ride' ? '🏍️' : (o.category === 'Parcel' ? '📦' : '🧺');
+        const whatsappText = encodeURIComponent(`నమస్కారం ${o.customerName}, మీ ChiPo ఆర్డర్ (#${o.id}) ప్రస్తుత స్థితి: ${badge.label}. మొత్తం: ₹${o.amount}. - శ్రీ వర్షిత ఎంటర్ప్రైజెస్`);
+
+        return `
+          <div class="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs space-y-2.5">
+            <!-- Top Row: ID, Category & Status Badge -->
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5">
+                <span class="text-sm">${catIcon}</span>
+                <span class="text-xs font-extrabold text-slate-900">#${o.id}</span>
+                <span class="text-[10px] text-slate-400">• ${o.time || 'Just now'}</span>
+              </div>
+              <span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${badge.cls}">
+                ${badge.label}
+              </span>
+            </div>
+
+            <!-- Customer & Call / WhatsApp Buttons -->
+            <div class="flex items-center justify-between bg-slate-50 rounded-xl p-2.5">
+              <div class="min-w-0 pr-2">
+                <h3 class="text-xs font-extrabold text-slate-900 truncate">${o.customerName}</h3>
+                <p class="text-[11px] font-semibold text-slate-600">+91 ${o.phone}</p>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <a href="tel:+91${o.phone}" class="w-9 h-9 rounded-xl bg-green-100 hover:bg-green-200 text-[#15803d] flex items-center justify-center text-sm" title="Call Customer">
+                  <i class="fa-solid fa-phone"></i>
+                </a>
+                <a href="https://wa.me/91${o.phone}?text=${whatsappText}" target="_blank" class="w-9 h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center text-base" title="Send WhatsApp Update">
+                  <i class="fa-brands fa-whatsapp"></i>
+                </a>
+              </div>
+            </div>
+
+            <!-- Village / Route & Items -->
+            <div class="space-y-1 text-xs">
+              <p class="font-bold text-slate-800 flex items-start gap-1.5">
+                <i class="fa-solid fa-location-dot text-[#f97316] mt-0.5 shrink-0"></i>
+                <span>${o.village}</span>
+              </p>
+              <p class="text-[11px] text-slate-600 bg-orange-50/60 border border-orange-100 rounded-lg px-2.5 py-1.5">
+                ${o.details}
+              </p>
+            </div>
+
+            <!-- Payment & Status Action Selector -->
+            <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+              <div>
+                <span class="text-sm font-extrabold text-slate-900">₹${o.amount}</span>
+                <span class="ml-1.5 text-[10px] font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded">${o.payment}</span>
+              </div>
+
+              <select onchange="updateOrderStatus('${o.id}', this.value)" class="bg-slate-900 text-white text-[11px] font-bold rounded-xl px-2.5 py-2 focus:outline-none">
+                <option value="New" ${o.status === 'New' ? 'selected' : ''}>New / కొత్తది</option>
+                <option value="Accepted" ${o.status === 'Accepted' ? 'selected' : ''}>Accepted / అంగీకరించు</option>
+                <option value="Out for Delivery" ${o.status === 'Out for Delivery' ? 'selected' : ''}>Out for Delivery / పంపండి</option>
+                <option value="Delivered" ${o.status === 'Delivered' ? 'selected' : ''}>Delivered / పూర్తయింది</option>
+                <option value="Cancelled" ${o.status === 'Cancelled' ? 'selected' : ''}>Cancelled / రద్దు</option>
+              </select>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateOrderStatus(orderId, newStatus) {
+      const target = orders.find(o => o.id === orderId);
+      if (!target) return;
+      target.status = newStatus;
+      saveToStorage();
+      updateDashboardStats();
+      renderOrdersList();
+      showToast(`Order #${orderId} updated to "${newStatus}"`);
+    }
+
+    function addSimulatedCustomerOrder() {
+      const sampleRoutes = [
+        { v: 'ఐతవరం (Aithavaram) - Main Center', d: 'కందిపప్పు (1kg), పంచదార (2kg), టీ పొడి (250g)', amt: 295, cat: 'Grocery' },
+        { v: 'BJT స్కూల్ & కాలేజీ ➔ నందిగామ', d: '🛺 ChiPo Auto Ride • 18.5 km', amt: 192, cat: 'Ride' },
+        { v: 'తుర్లపాడు (Turlapadu) - Near Panchayat', d: 'విజయ పాలు (1L), బ్రెడ్, గుడ్లు (12)', amt: 165, cat: 'Grocery' }
+      ];
+      const pick = sampleRoutes[Math.floor(Math.random() * sampleRoutes.length)];
+      const newOrder = {
+        id: (pick.cat === 'Ride' ? 'RID-' : 'CHP-') + Math.floor(1000 + Math.random() * 9000),
+        category: pick.cat,
+        customerName: 'కొత్త కస్టమర్ (New Customer)',
+        phone: '9848055667',
+        village: pick.v,
+        details: pick.d,
+        payment: 'COD',
+        amount: pick.amt,
+        status: 'New',
+        time: 'Just now'
+      };
+      orders.unshift(newOrder);
+      saveToStorage();
+      renderAll();
+      showToast('🔔 కొత్త ఆర్డర్ వచ్చింది! (#' + newOrder.id + ')');
+    }
+
+    // 9. TAB 2: LIVE STOCK & PRICE MANAGER
+    function renderStockCategoryPills() {
+      const container = document.getElementById('stock-category-pills');
+      container.innerHTML = stockCategories.map(cat => {
+        const active = currentStockCategory === cat;
+        return `
+          <button onclick="selectStockCategory('${cat}')" class="shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${active ? 'bg-[#15803d] text-white' : 'bg-white text-slate-700 border border-slate-200'}">
+            ${cat}
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selectStockCategory(cat) {
+      currentStockCategory = cat;
+      renderStockCategoryPills();
+      renderStockList();
+    }
+
+    function renderStockList() {
+      const query = (document.getElementById('stock-search-input')?.value || '').toLowerCase();
+      const filtered = products.filter(p => {
+        const matchCat = currentStockCategory === 'All' || p.category === currentStockCategory;
+        const matchQuery = p.te.toLowerCase().includes(query) || p.en.toLowerCase().includes(query);
+        return matchCat && matchQuery;
+      });
+
+      const container = document.getElementById('admin-stock-list');
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="bg-white rounded-2xl p-6 text-center text-xs text-slate-400 border border-slate-200">వస్తువులు కనుగొనబడలేదు.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(p => `
+        <div class="bg-white rounded-2xl p-3 border ${p.inStock ? 'border-slate-200' : 'border-red-200 bg-red-50/30'} shadow-2xs space-y-2.5">
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div class="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center text-2xl shrink-0">
+                ${p.emoji || '🛒'}
+              </div>
+              <div class="min-w-0">
+                <h3 class="text-xs font-extrabold text-slate-900 truncate">${p.te}</h3>
+                <p class="text-[11px] text-slate-600 truncate">${p.en} • <span class="font-bold text-slate-800">${p.weight}</span></p>
+                <span class="text-[9px] font-semibold text-slate-400">${p.category}</span>
+              </div>
+            </div>
+
+            <!-- Tactile Stock Toggle Switch -->
+            <div class="flex flex-col items-end shrink-0">
+              <button onclick="toggleProductStock(${p.id})" class="w-14 h-7 rounded-full p-1 transition-colors flex items-center ${p.inStock ? 'bg-[#16a34a] justify-end' : 'bg-slate-300 justify-start'}">
+                <span class="w-5 h-5 rounded-full bg-white shadow block"></span>
+              </button>
+              <span class="text-[9px] font-extrabold mt-1 ${p.inStock ? 'text-[#15803d]' : 'text-red-600'}">
+                ${p.inStock ? 'స్టాక్ ఉంది' : 'స్టాక్ లేదు'}
+              </span>
+            </div>
+          </div>
+
+          <!-- Editable MRP & Selling Price Row -->
+          <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <div class="flex items-center bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
+                <span class="text-[10px] text-slate-400 mr-1">MRP ₹</span>
+                <input type="number" value="${p.mrp}" onchange="updateProductPrice(${p.id}, 'mrp', this.value)"
+                  class="w-12 bg-transparent text-xs font-bold text-slate-600 focus:outline-none" />
+              </div>
+              <div class="flex items-center bg-green-50 border border-green-300 rounded-lg px-2 py-1">
+                <span class="text-[10px] text-[#15803d] font-bold mr-1">Sell ₹</span>
+                <input type="number" value="${p.price}" onchange="updateProductPrice(${p.id}, 'price', this.value)"
+                  class="w-12 bg-transparent text-xs font-extrabold text-[#15803d] focus:outline-none" />
+              </div>
+            </div>
+
+            <button onclick="deleteProduct(${p.id})" class="text-slate-400 hover:text-red-600 p-1.5 text-xs" title="Delete Item">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleProductStock(id) {
+      const item = products.find(p => p.id === id);
+      if (!item) return;
+      item.inStock = !item.inStock;
+      saveToStorage();
+      renderStockList();
+      showToast(`${item.te}: ${item.inStock ? 'In Stock (స్టాక్ ఉంది)' : 'Out of Stock (స్టాక్ లేదు)'}`);
+    }
+
+    function updateProductPrice(id, field, val) {
+      const num = Number(val);
+      if (isNaN(num) || num <= 0) return;
+      const item = products.find(p => p.id === id);
+      if (!item) return;
+      item[field] = num;
+      saveToStorage();
+      showToast(`${item.te} ధర ₹${num} కి అప్‌డేట్ అయింది`);
+    }
+
+    function deleteProduct(id) {
+      products = products.filter(p => p.id !== id);
+      saveToStorage();
+      renderStockList();
+      showToast('వస్తువు తొలగించబడింది');
+    }
+
+    // Add New Item Modal Handlers
+    function openAddProductModal() {
+      document.getElementById('add-product-modal').classList.remove('hidden');
+    }
+    function closeAddProductModal() {
+      document.getElementById('add-product-modal').classList.add('hidden');
+    }
+
+    function saveNewProduct() {
+      const te = document.getElementById('new-prod-te').value.trim();
+      const en = document.getElementById('new-prod-en').value.trim();
+      const cat = document.getElementById('new-prod-cat').value;
+      const weight = document.getElementById('new-prod-weight').value.trim() || '1 unit';
+      const price = Number(document.getElementById('new-prod-price').value);
+      const mrp = Number(document.getElementById('new-prod-mrp').value) || price;
+
+      if (!te || !en || !price) {
+        showToast('దయచేసి పేరు మరియు అమ్మకపు ధర నమోదు చేయండి');
+        return;
+      }
+
+      products.unshift({
+        id: Date.now(),
+        te,
+        en,
+        category: cat,
+        weight,
+        mrp,
+        price,
+        inStock: true,
+        emoji: '🛍️'
+      });
+
+      saveToStorage();
+      renderStockList();
+      closeAddProductModal();
+
+      // Clear inputs
+      ['new-prod-te', 'new-prod-en', 'new-prod-weight', 'new-prod-mrp', 'new-prod-price'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      showToast(`"${te}" కొత్త వస్తువు చేర్చబడింది!`);
+    }
+
+    // 10. TAB 3: STORE & DELIVERY SETTINGS
+    function applySettingsToUI() {
+      const toggle = document.getElementById('store-master-toggle');
+      const title = document.getElementById('store-status-title');
+      const badge = document.getElementById('header-store-badge');
+
+      if (storeSettings.isOpen) {
+        toggle.className = 'w-16 h-9 rounded-full bg-[#16a34a] p-1 transition-colors flex items-center justify-end';
+        title.textContent = 'Store Open • షాప్ తెరిచి ఉంది';
+        title.className = 'text-sm font-extrabold text-[#15803d]';
+        badge.textContent = 'OPEN';
+        badge.className = 'text-[10px] font-extrabold bg-green-100 text-[#15803d] px-2 py-0.5 rounded-full';
+      } else {
+        toggle.className = 'w-16 h-9 rounded-full bg-red-500 p-1 transition-colors flex items-center justify-start';
+        title.textContent = 'Store Closed • షాప్ మూసి ఉంది';
+        title.className = 'text-sm font-extrabold text-red-600';
+        badge.textContent = 'CLOSED';
+        badge.className = 'text-[10px] font-extrabold bg-red-100 text-red-700 px-2 py-0.5 rounded-full';
+      }
+
+      document.getElementById('setting-bike-rate').value = storeSettings.bikeRate;
+      document.getElementById('setting-auto-rate').value = storeSettings.autoRate;
+      document.getElementById('setting-free-delivery').value = storeSettings.freeDeliveryMin;
+    }
+
+    function toggleStoreOpen() {
+      storeSettings.isOpen = !storeSettings.isOpen;
+      saveToStorage();
+      applySettingsToUI();
+      showToast(storeSettings.isOpen ? 'షాప్ తెరవబడింది (Store Open)' : 'షాప్ మూసివేయబడింది (Store Closed)');
+    }
+
+    function saveDeliverySettings() {
+      storeSettings.bikeRate = Number(document.getElementById('setting-bike-rate').value) || 4.5;
+      storeSettings.autoRate = Number(document.getElementById('setting-auto-rate').value) || 8.5;
+      storeSettings.freeDeliveryMin = Number(document.getElementById('setting-free-delivery').value) || 199;
+      saveToStorage();
+      showToast('రైడ్ & డెలివరీ ఛార్జీలు సేవ్ చేయబడ్డాయి!');
+    }
+  </script>
+</body>
+</html>
